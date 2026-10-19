@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Money Budgeting V1</title>
+  <link rel= "icon" href="https://play-lh.googleusercontent.com/VWeO7-YOFgXMIWU8Eu1huRhXNzTjZbniGSt8Ck7PRKyRxTiNLiMbW4JviVzDwLggfMNHEJplZovC0F7yLbYN" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#f3f5f9; margin:0; padding:16px; color:#1f2937; }
+    .container { max-width:820px; margin:auto; }
+    h1 { font-size:20px; margin:0 0 14px; }
+    h2 { font-size:17px; margin-top:0; }
+    .nav { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+    .nav button { padding:10px 6px; border:none; border-radius:10px; font-size:13px; font-weight:bold; cursor:pointer; background:#e5e7eb; color:#374151; }
+    .nav button.active { background:#2563eb; color:#fff; }
+    .page { display:none; } .page.active { display:block; }
+    .card { background:#fff; padding:18px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); margin-bottom:16px; }
+    label { display:block; font-size:13px; font-weight:bold; margin:10px 0 5px; }
+    input, select { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:15px; box-sizing:border-box; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    button.action { width:100%; margin-top:14px; padding:12px; border:none; border-radius:8px; font-size:15px; font-weight:bold; cursor:pointer; color:#fff; }
+    .primary { background:#16a34a; } .secondary { background:#2563eb; } .danger { background:#dc2626; }
+    .box { background:#f9fafb; padding:12px; border-radius:10px; margin-bottom:8px; }
+    .label { font-size:12px; color:#6b7280; } .value { font-weight:bold; margin-top:4px; }
+    .income { color:#16a34a; } .expense { color:#dc2626; } .balance { color:#2563eb; } .warn { color:#d97706; }
+    .progress { height:8px; background:#e5e7eb; border-radius:99px; margin-top:8px; overflow:hidden; }
+    .bar { height:100%; background:#2563eb; width:0%; }
+    .bar.warning { background:#f59e0b; } .bar.over { background:#dc2626; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { padding:8px; border-bottom:1px solid #e5e7eb; text-align:left; }
+    .small { border:none; padding:5px 8px; border-radius:6px; color:#fff; cursor:pointer; font-size:12px; }
+    #message { display:none; margin-bottom:12px; padding:10px; border-radius:8px; font-size:14px; }
+    .success { background:#dcfce7; color:#166534; display:block !important; }
+    .error { background:#fee2e2; color:#991b1b; display:block !important; }
+    .note { font-size:12px; color:#6b7280; margin-top:8px; }
+    .detail-row td { color:#6b7280; background:#fafafa; }
+
+    .help-hero { background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; }
+    .help-hero h2 { color:#fff; }
+    .help-hero p { font-size:14px; opacity:.95; }
+
+    .faq-item { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); margin-bottom:12px; overflow:hidden; }
+    .faq-question { width:100%; text-align:left; background:#fff; border:none; padding:16px; font-size:15px; font-weight:bold; color:#1f2937; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .faq-question:hover { background:#f9fafb; }
+    .faq-icon { background:#eff6ff; color:#2563eb; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0; }
+    .faq-answer { display:none; padding:0 16px 16px; font-size:14px; line-height:1.6; color:#374151; }
+    .faq-item.open .faq-answer { display:block; }
+    .faq-item.open .faq-icon { background:#2563eb; color:#fff; }
+    .faq-tip { background:#ecfdf5; border-left:4px solid #16a34a; padding:10px 12px; border-radius:8px; margin-top:10px; font-size:13px; }
+    .faq-warning { background:#fff7ed; border-left:4px solid #f59e0b; padding:10px 12px; border-radius:8px; margin-top:10px; font-size:13px; }
+
+    @media (max-width:560px) {
+      .grid2,.grid3 { grid-template-columns:1fr; }
+      .nav { grid-template-columns:repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Money Budgeting V1</h1>
+
+  <div class="nav">
+    <button id="nav-dashboard" class="active" onclick="showPage('dashboard')">Beranda</button>
+    <button id="nav-transaction" onclick="showPage('transaction')">Transaksi</button>
+    <button id="nav-split" onclick="showPage('split')">Split</button>
+    <button id="nav-debt" onclick="showPage('debt')">Hutang-Piutang</button>
+    <button id="nav-budget" onclick="showPage('budget')">Budget</button>
+    <button id="nav-settings" onclick="showPage('settings')">Pengaturan</button>
+    <button id="nav-help" onclick="showPage('help')">Help</button>
+  </div>
+
+  <div id="message"></div>
+
+  <!-- BERANDA -->
+  <div id="page-dashboard" class="page active">
+    <div class="card">
+      <h2>Ringkasan</h2>
+      <label>Bulan</label>
+      <input type="month" id="dashboardMonth" onchange="loadDashboard()">
+      <div class="grid3" style="margin-top:12px;">
+        <div class="box"><div class="label">Total Saldo</div><div class="value balance" id="totalBalance">Rp0</div></div>
+        <div class="box"><div class="label">Pemasukan</div><div class="value income" id="totalIncome">Rp0</div></div>
+        <div class="box"><div class="label">Pengeluaran</div><div class="value expense" id="totalExpense">Rp0</div></div>
+      </div>
+    </div>
+    <div class="card"><h2>Saldo per Rekening</h2><div id="accountList"></div></div>
+    <div class="card"><h2>Pemakaian Budget</h2><div id="budgetUsageList"></div></div>
+  </div>
+
+  <!-- TRANSAKSI -->
+  <div id="page-transaction" class="page">
+    <div class="card">
+      <h2>Tambah Transaksi</h2>
+      <label>Tanggal Transaksi</label>
+      <input type="date" id="tanggal">
+      <label>Waktu Transaksi <span class="note">(opsional)</span></label>
+      <input type="time" id="waktuTransaksi">
+      <label>Rekening</label>
+      <select id="rekening"></select>
+      <label>Kategori</label>
+      <select id="kategori" onchange="showBudgetInfo('kategori','categoryBudgetInfo')"></select>
+      <div id="categoryBudgetInfo"></div>
+      <label>Keterangan</label>
+      <input type="text" id="keterangan" placeholder="Contoh: makan siang kampus">
+      <div class="grid2">
+        <div><label>Pemasukan</label><input type="number" id="pemasukan" min="0" placeholder="0"></div>
+        <div><label>Pengeluaran</label><input type="number" id="pengeluaran" min="0" placeholder="0"></div>
+      </div>
+      <button class="action primary" id="submitBtn" onclick="submitTransaction()">Simpan Transaksi</button>
+    </div>
+
+    <div class="card">
+      <h2>Transaksi Terakhir</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Waktu</th><th>Rekening</th><th>Kategori</th><th>Keterangan</th><th>Masuk</th><th>Keluar</th><th>Saldo</th><th></th></tr></thead>
+          <tbody id="transactionBody"><tr><td colspan="8">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPLIT -->
+  <div id="page-split" class="page">
+    <div class="card">
+      <h2>Split Transaksi Awal</h2>
+      <p class="note">Pilih transaksi pengeluaran yang sudah dicatat, lalu pecah nominalnya ke beberapa kategori. Total split harus sama dengan transaksi awal.</p>
+      <label>Transaksi Awal</label>
+      <select id="splitTransaction" onchange="loadSelectedTransaction()"></select>
+      <div id="selectedTransactionInfo" class="note"></div>
+      <label>Waktu Split <span class="note">(otomatis mengikuti transaksi awal; ubah hanya untuk penyesuaian)</span></label>
+      <input type="time" id="splitWaktu">
+      <div id="splitItems"></div>
+      <button class="action secondary" onclick="addSplitItem()">Tambah Bagian</button>
+      <button class="action primary" onclick="submitSplit()">Simpan Split Transaksi</button>
+      <div class="note" id="splitTotal"></div>
+    </div>
+  </div>
+
+  <!-- HUTANG PIUTANG -->
+  <div id="page-debt" class="page">
+    <div class="card">
+      <h2>Ringkasan Belum Lunas</h2>
+      <div class="grid2">
+        <div class="box"><div class="label">Total Hutang</div><div class="value expense" id="totalHutang">Rp0</div></div>
+        <div class="box"><div class="label">Total Piutang</div><div class="value income" id="totalPiutang">Rp0</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Catat Hutang / Piutang</h2>
+      <p class="note"><strong>Hutang</strong>: saya meminjam uang. <strong>Piutang</strong>: saya meminjamkan uang dan mengurangi budget kategori yang dipilih.</p>
+      <label>Tanggal</label>
+      <input type="date" id="debtTanggal">
+      <label>Waktu <span class="note">(opsional)</span></label>
+      <input type="time" id="debtWaktu">
+      <label>Jenis</label>
+      <select id="debtJenis">
+        <option value="Hutang">Hutang — saya meminjam uang</option>
+        <option value="Piutang">Piutang — saya meminjamkan uang</option>
+      </select>
+      <label>Nama Orang</label>
+      <input type="text" id="debtNama" placeholder="Contoh: Budi">
+      <label>Rekening</label>
+      <select id="debtRekening"></select>
+      <label>Kategori (terhubung ke Budget)</label>
+      <select id="debtKategori" onchange="showBudgetInfo('debtKategori','debtBudgetInfo')"></select>
+      <div id="debtBudgetInfo"></div>
+      <label>Nominal</label>
+      <input type="number" id="debtNominal" min="0" placeholder="Contoh: 50000">
+      <label>Keterangan</label>
+      <input type="text" id="debtKeterangan" placeholder="Contoh: pinjam untuk bensin">
+      <label>Jatuh Tempo <span class="note">(opsional)</span></label>
+      <input type="date" id="debtDue">
+      <button class="action primary" onclick="submitDebt()">Simpan Hutang / Piutang</button>
+    </div>
+
+    <div class="card">
+      <h2>Daftar Hutang & Piutang</h2>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Tanggal</th><th>Jenis</th><th>Nama</th><th>Rekening</th><th>Kategori</th><th>Nominal</th><th>Jatuh Tempo</th><th>Status</th><th></th></tr></thead>
+          <tbody id="debtBody"><tr><td colspan="9">Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUDGET -->
+  <div id="page-budget" class="page">
+    <div class="card">
+      <h2>Atur Uang Bulanan</h2>
+      <label>Bulan</label>
+      <input type="month" id="budgetMonth" onchange="loadBudgetPage()">
+      <label>Total Uang Bulanan</label>
+      <input type="number" id="budgetTotal" min="0" placeholder="Contoh: 1500000" oninput="previewBudget()">
+      <div id="budgetPreview" class="note"></div>
+      <button class="action secondary" onclick="saveBudget()">Simpan Budget Bulan Ini</button>
+    </div>
+
+    <div class="card"><h2>Pemakaian Budget</h2><div id="budgetUsageDetail"></div></div>
+
+    <div class="card">
+      <h2>Kelola Kategori</h2>
+      <p class="note">Semua kategori dibuat di sini dan wajib punya kelompok. Kelompok “Pemasukan” tidak memakai budget.</p>
+      <label>Nama Kategori</label>
+      <input type="text" id="categoryName" placeholder="Contoh: Kopi, Laundry, Buku">
+      <label>Kelompok</label>
+      <select id="categoryGroup">
+        <option value="makan">Uang Makan (45%)</option>
+        <option value="operasional">Operasional (30%)</option>
+        <option value="nabung">Nabung (15%)</option>
+        <option value="sedekahInvestasi">Sedekah / Investasi (10%)</option>
+        <option value="pemasukan">Pemasukan (tidak memakai budget)</option>
+      </select>
+      <button class="action secondary" onclick="saveCategory()">Tambah Kategori</button>
+      <div id="categoryList" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- PENGATURAN -->
+  <div id="page-settings" class="page">
+    <div class="card">
+      <h2>Tambah Rekening</h2>
+      <label>Nama Rekening</label>
+      <input type="text" id="accountName" placeholder="Contoh: BNI, SeaBank, Cash Dompet">
+      <label>Jenis</label>
+      <select id="accountType">
+        <option value="Bank">Bank</option>
+        <option value="Bank Digital">Bank Digital</option>
+        <option value="E-Wallet">E-Wallet</option>
+        <option value="Tunai">Tunai</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+      <label>Saldo yang Sedang Anda Pegang</label>
+      <input type="number" id="accountBalance" min="0" placeholder="Contoh: 100000">
+      <label>Tanggal Saldo Ini Berlaku</label>
+      <input type="date" id="accountDate">
+      <button class="action secondary" onclick="addAccount()">Tambah Rekening</button>
+    </div>
+
+    <div class="card">
+      <h2>Transfer Antar Rekening</h2>
+      <p class="note">Gunakan untuk memindahkan uang panas, nabung, atau sedekah antar-rekening. Transfer tidak dihitung pengeluaran dan tidak mengurangi budget.</p>
+      <label>Tanggal</label>
+      <input type="date" id="transferDate">
+      <label>Dari Rekening</label>
+      <select id="transferFrom"></select>
+      <label>Ke Rekening</label>
+      <select id="transferTo"></select>
+      <label>Nominal</label>
+      <input type="number" id="transferAmount" min="0" placeholder="Contoh: 200000">
+      <label>Keterangan</label>
+      <input type="text" id="transferNote" placeholder="Contoh: pindahkan uang nabung ke BNI">
+      <button class="action secondary" onclick="submitTransfer()">Transfer</button>
+    </div>
+
+    <div class="card">
+      <h2>Penyesuaian Saldo</h2>
+      <label>Tanggal Penyesuaian</label>
+      <input type="date" id="adjustmentDate">
+      <label>Rekening</label>
+      <select id="adjustmentAccount"></select>
+      <label>Saldo Sebenarnya</label>
+      <input type="number" id="adjustmentAmount" min="0" placeholder="Contoh: 350000">
+      <label>Keterangan</label>
+      <input type="text" id="adjustmentNote" placeholder="Contoh: koreksi karena lupa catat">
+      <button class="action danger" onclick="saveAdjustment()">Simpan Penyesuaian</button>
+    </div>
+  </div>
+
+  <!-- HELP -->
+  <div id="page-help" class="page">
+    <div class="card help-hero">
+      <h2>Pusat Bantuan</h2>
+      <p>Halaman ini menjelaskan cara memakai aplikasi dan keputusan keuangan saat budget minus, menerima uang tambahan, memindahkan uang, atau mencatat hutang-piutang.</p>
+    </div>
+
+    <div class="card">
+      <label>Cari pertanyaan</label>
+      <input type="text" id="helpSearch" placeholder="Contoh: budget minus, uang tambahan, transfer" oninput="filterHelp()">
+    </div>
+
+    <div id="helpList"></div>
+  </div>
+</div>
+
+<script>
+  let categories = [];
+  let selectedSplit = null;
+
+  const GROUP_OPTIONS = [
+    ['makan', 'Uang Makan'],
+    ['operasional', 'Operasional'],
+    ['nabung', 'Nabung'],
+    ['sedekahInvestasi', 'Sedekah / Investasi'],
+    ['pemasukan', 'Pemasukan']
+  ];
+
+  const HELP_DATA = [
+    {
+      q: 'Bagaimana jika budget mengalami minus di pertengahan bulan?',
+      a: `
+        Budget minus berarti pengeluaran sudah melebihi alokasi awal, bukan berarti uang fisik Anda pasti habis.
+        Pertama, cek kategori mana yang melebihi budget. Kedua, hentikan sementara pengeluaran non-darurat.
+        Ketiga, jika benar-benar membutuhkan dana, Anda dapat memindahkan sebagian alokasi nabung ke kebutuhan mendesak secara sadar.
+        <div class="faq-warning">Jangan menghapus atau mereset budget hanya karena merah. Angka minus penting untuk mengevaluasi pola belanja bulan ini.</div>`
+    },
+    {
+      q: 'Bagaimana jika saya meminta tambahan uang ke orang tua?',
+      a: `
+        Jika uang tambahan sudah benar-benar diterima, buka halaman <strong>Transaksi</strong>.
+        Pilih rekening tempat uang masuk, kategori <strong>Uang dari Orang Tua</strong>, lalu isi nominal pada kolom Pemasukan.
+        Setelah itu, buka halaman <strong>Budget</strong> dan perbarui Total Uang Bulanan jika uang tambahan itu memang akan dipakai untuk kebutuhan bulan berjalan.
+        <div class="faq-tip">Contoh: budget awal Rp1.000.000, lalu ada tambahan Rp300.000 untuk kebutuhan bulan ini. Ubah total uang bulanan menjadi Rp1.300.000 agar alokasi 45/30/15/10 dihitung ulang.</div>`
+    },
+    {
+      q: 'Apakah uang tambahan harus mengubah budget jika budget masih ada?',
+      a: `
+        Tidak harus. Jika budget masih aman dan uang tambahan tidak akan dipakai bulan ini, cukup catat sebagai pemasukan,
+        lalu pindahkan ke rekening nabung atau sedekah menggunakan fitur <strong>Transfer Antar Rekening</strong>.
+        Ubah total budget hanya jika uang tambahan memang akan dipakai untuk kebutuhan bulan berjalan.
+        <div class="faq-tip">Uang tambahan yang tidak dipakai sebaiknya dijadikan dana darurat, tabungan, atau cadangan bulan depan.</div>`
+    },
+    {
+      q: 'Bagaimana memisahkan uang panas, nabung, dan sedekah?',
+      a: `
+        Gunakan rekening berbeda untuk tiap tujuan. Misalnya: Cash Dompet untuk uang harian,
+        SeaBank untuk uang panas dan pembayaran digital, serta BNI untuk nabung.
+        Untuk memindahkan uang, buka <strong>Pengaturan > Transfer Antar Rekening</strong>.
+        <div class="faq-tip">Transfer antar rekening tidak dihitung sebagai pengeluaran dan tidak mengurangi budget.</div>`
+    },
+    {
+      q: 'Bagaimana cara memakai fitur Split?',
+      a: `
+        Split dipakai saat satu pembayaran mencakup beberapa jenis belanja.
+        Buka halaman <strong>Split</strong>, pilih transaksi pengeluaran yang sudah dicatat,
+        lalu pecah nominalnya ke beberapa kategori.
+        <div class="faq-tip">Contoh: transaksi Rp20.000 dipecah menjadi Rp10.000 Makanan, Rp5.000 Makanan untuk nasi telur, dan Rp5.000 Minuman untuk es teh.</div>
+        <div class="faq-warning">Total split harus sama persis dengan nominal transaksi awal.</div>`
+    },
+    {
+      q: 'Bagaimana cara mencatat hutang dan piutang?',
+      a: `
+        Buka halaman <strong>Hutang-Piutang</strong>.
+        Pilih <strong>Hutang</strong> jika Anda meminjam uang dari orang lain, sehingga uang masuk ke rekening Anda.
+        Pilih <strong>Piutang</strong> jika Anda meminjamkan uang, sehingga uang keluar dari rekening Anda dan mengurangi budget kategori yang dipilih.
+        <div class="faq-tip">Saat hutang atau piutang lunas, klik “Tandai Lunas”. Sistem otomatis membuat transaksi pelunasan.</div>`
+    },
+    {
+      q: 'Mengapa pemakaian budget tidak muncul?',
+      a: `
+        Pastikan Anda sudah mengisi <strong>Total Uang Bulanan</strong> di halaman Budget untuk bulan yang sedang dipilih.
+        Pastikan juga kategori transaksi sudah dibuat dan terhubung ke kelompok budget di halaman Budget.
+        Kategori dengan kelompok “Pemasukan” memang tidak menampilkan pemakaian budget karena bukan pos pengeluaran.
+        <div class="faq-warning">Jika kolom Bulan di sheet Budget berubah menjadi tanggal oleh Google Sheets, simpan ulang budget dari halaman Budget agar formatnya diperbarui.</div>`
+    },
+    {
+      q: 'Kapan saya boleh memakai uang nabung?',
+      a: `
+        Uang nabung sebaiknya hanya dipakai untuk kebutuhan darurat atau tujuan tabungan.
+        Jika uang panas habis di pertengahan bulan, cek dulu apakah ada pengeluaran yang bisa ditunda.
+        Jika benar-benar darurat, gunakan sebagian nabung secara sadar dan catat pengeluarannya dengan kategori yang sesuai.
+        <div class="faq-tip">Idealnya, nabung dikembalikan saat uang bulanan berikutnya masuk.</div>`
+    }
+  ];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function rupiah(v) {
+    return 'Rp' + Math.round(Number(v || 0)).toLocaleString('id-ID');
+  }
+
+  function msg(text, ok) {
+    const el = document.getElementById('message');
+    el.textContent = text;
+    el.className = ok ? 'success' : 'error';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function fail(e) {
+    msg('Gagal: ' + e.message, false);
+  }
+
+  function val(id) {
+    return document.getElementById(id).value;
+  }
+
+  function todayStr() {
+    const d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  function showPage(page) {
+    const pages = ['dashboard','transaction','split','debt','budget','settings','help'];
+
+    pages.forEach(n => {
+      document.getElementById('page-' + n).classList.remove('active');
+      document.getElementById('nav-' + n).classList.remove('active');
+    });
+
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-' + page).classList.add('active');
+
+    if (page === 'dashboard') loadDashboard();
+    if (page === 'transaction') { loadCategorySelect('kategori', false); loadAccountSelect('rekening'); loadTransactions(); }
+    if (page === 'split') loadSplitPage();
+    if (page === 'debt') { loadCategorySelect('debtKategori', true); loadAccountSelect('debtRekening'); loadDebts(); }
+    if (page === 'budget') { loadBudgetPage(); loadCategoryManager(); }
+    if (page === 'settings') { loadAccountSelect('adjustmentAccount'); loadTransferAccounts(); }
+    if (page === 'help') renderHelp();
+  }
+
+  function loadCategorySelect(id, expenseOnly) {
+    google.script.run.withSuccessHandler(list => {
+      categories = list;
+      const filtered = expenseOnly ? list.filter(c => c.kelompok !== 'pemasukan') : list;
+
+      document.getElementById(id).innerHTML =
+        '<option value="">-- Pilih kategori --</option>' +
+        filtered.map(c => `<option value="${esc(c.nama)}">${esc(c.nama)}</option>`).join('');
+    }).getCategories();
+  }
+
+  function loadAccountSelect(id) {
+    google.script.run.withSuccessHandler(list => {
+      document.getElementById(id).innerHTML = list
+        .map(a => `<option value="${esc(a.nama)}">${esc(a.nama)}</option>`)
+        .join('');
+    }).getAccountList();
+  }
+
+  function showBudgetInfo(selectId, targetId) {
+    const kategori = val(selectId);
+    const el = document.getElementById(targetId);
+
+    if (!kategori) {
+      el.innerHTML = '';
+      return;
+    }
+
+    google.script.run.withSuccessHandler(r => {
+      if (r.status !== 'ok') {
+        el.innerHTML = `<div class="note">${esc(r.message)}</div>`;
+        return;
+      }
+
+      const pct = r.budget > 0 ? Math.min(r.terpakai / r.budget * 100, 100) : 0;
+      const bar = r.terpakai > r.budget ? 'over' : (pct >= 80 ? 'warning' : '');
+      const text = r.sisa <= 0 ? 'expense' : (r.sisa < r.budget * 0.2 ? 'warn' : 'income');
+
+      el.innerHTML = `
+        <div class="box">
+          <strong>${esc(r.label)}</strong><br>
+          <span class="label">Budget: ${rupiah(r.budget)} | Terpakai: ${rupiah(r.terpakai)}</span><br>
+          <span class="label ${text}">Sisa: ${rupiah(r.sisa)}</span>
+          <div class="progress"><div class="bar ${bar}" style="width:${pct}%"></div></div>
+        </div>`;
+    }).withFailureHandler(fail).getRemainingBudgetForCategory(kategori);
+  }
+
+  function renderUsage(usage, targetId) {
+    const el = document.getElementById(targetId);
+
+    if (!usage || !usage.length) {
+      el.innerHTML = '<div class="note">Belum ada budget untuk bulan ini. Atur di halaman Budget.</div>';
+      return;
+    }
+
+    el.innerHTML = usage.map(u => {
+      const pct = u.budget > 0 ? Math.min(u.used / u.budget * 100, 100) : 0;
+      const bar = u.used > u.budget ? 'over' : (pct >= 80 ? 'warning' : '');
+
+      return `
+        <div class="box">
+          <strong>${esc(u.label)} (${Math.round(u.percent * 100)}%)</strong><br>
+          <span class="label">Terpakai ${rupiah(u.used)} dari ${rupiah(u.budget)}</span><br>
+          <span class="label">Sisa: ${rupiah(u.budget - u.used)}</span>
+          <div class="progress"><div class="bar ${bar}" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join('');
+  }
+
+  function loadDashboard() {
+    google.script.run.withSuccessHandler(d => {
+      document.getElementById('totalBalance').textContent = rupiah(d.totalSaldo);
+      document.getElementById('totalIncome').textContent = rupiah(d.totalPemasukan);
+      document.getElementById('totalExpense').textContent = rupiah(d.totalPengeluaran);
+
+      document.getElementById('accountList').innerHTML = d.accounts.length
+        ? d.accounts.map(a => `
+            <div class="box">
+              <div class="label">${esc(a.nama)} • ${esc(a.jenis)}</div>
+              <div class="value balance">${rupiah(a.saldo)}</div>
+            </div>`).join('')
+        : '<div class="note">Belum ada rekening. Tambahkan di halaman Pengaturan.</div>';
+
+      renderUsage(d.budgetUsage, 'budgetUsageList');
+    }).withFailureHandler(fail).getDashboard(val('dashboardMonth'));
+  }
+
+  function loadTransactions() {
+    google.script.run.withSuccessHandler(list => {
+      const tb = document.getElementById('transactionBody');
+
+      if (!list.length) {
+        tb.innerHTML = '<tr><td colspan="8">Belum ada transaksi.</td></tr>';
+        return;
+      }
+
+      tb.innerHTML = list.map(t => {
+        const label = t.isDetail
+          ? '↳ ' + esc(t.kategori)
+          : esc(t.kategori) + (t.splitId ? ' • Split' : '');
+
+        const del = t.refId
+          ? '-'
+          : `<button class="small danger" onclick="deleteTransaction(${t.rowNumber})">Hapus</button>`;
+
+        return `<tr class="${t.isDetail ? 'detail-row' : ''}">
+          <td>${esc(t.tanggalTampil)} ${esc(t.waktuTransaksi)}</td>
+          <td>${esc(t.rekening)}</td>
+          <td>${label}</td>
+          <td>${esc(t.keterangan) || '-'}</td>
+          <td class="income">${t.pemasukan ? rupiah(t.pemasukan) : '-'}</td>
+          <td class="expense">${t.pengeluaran ? rupiah(t.pengeluaran) : '-'}</td>
+          <td class="balance">${t.saldo === '' ? '-' : rupiah(t.saldo)}</td>
+          <td>${t.isDetail ? '' : del}</td>
+        </tr>`;
+      }).join('');
+    }).withFailureHandler(fail).getRecentTransactions(40);
+  }
+
+  function submitTransaction() {
+    const data = {
+      tanggal: val('tanggal'),
+      waktuTransaksi: val('waktuTransaksi'),
+      rekening: val('rekening'),
+      kategori: val('kategori'),
+      keterangan: val('keterangan'),
+      pemasukan: val('pemasukan'),
+      pengeluaran: val('pengeluaran')
+    };
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    google.script.run.withSuccessHandler(r => {
+      btn.disabled = false;
+      btn.textContent = 'Simpan Transaksi';
+
+      msg(r.message, r.success);
+
+      if (r.success) {
+        ['keterangan','pemasukan','pengeluaran','waktuTransaksi'].forEach(id => document.getElementById(id).value = '');
+        loadTransactions();
+        showBudgetInfo('kategori', 'categoryBudgetInfo');
+      }
+    }).withFailureHandler(e => {
+      btn.disabled = false;
+      btn.textContent = 'Simpan Transaksi';
+      fail(e);
+    }).addTransaction(data);
+  }
+
+  function deleteTransaction(row) {
+    if (!confirm('Hapus transaksi ini? Jika hasil split, seluruh bagiannya ikut terhapus.')) return;
+
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+      loadTransactions();
+    }).withFailureHandler(fail).deleteTransaction(row);
+  }
+
+  function loadSplitPage() {
+    document.getElementById('splitItems').innerHTML = '';
+    document.getElementById('splitTotal').textContent = '';
+    document.getElementById('selectedTransactionInfo').textContent = '';
+    document.getElementById('splitWaktu').value = '';
+    selectedSplit = null;
+
+    google.script.run.withSuccessHandler(list => {
+      categories = list;
+
+      google.script.run.withSuccessHandler(items => {
+        document.getElementById('splitTransaction').innerHTML =
+          '<option value="">-- Pilih transaksi pengeluaran --</option>' +
+          items.map(t => `<option value="${t.rowNumber}">${esc(t.tanggalTampil)} • ${esc(t.waktuTransaksi || '-')} • ${esc(t.rekening)} • ${esc(t.kategori)} • ${rupiah(t.pengeluaran)}</option>`).join('');
+      }).withFailureHandler(fail).getSplitCandidates();
+    }).getCategories();
+  }
+
+  function loadSelectedTransaction() {
+    const row = val('splitTransaction');
+    const info = document.getElementById('selectedTransactionInfo');
+
+    document.getElementById('splitItems').innerHTML = '';
+    document.getElementById('splitTotal').textContent = '';
+    document.getElementById('splitWaktu').value = '';
+    selectedSplit = null;
+
+    if (!row) {
+      info.textContent = '';
+      return;
+    }
+
+    google.script.run.withSuccessHandler(t => {
+      selectedSplit = t;
+
+      info.innerHTML = `
+        <strong>Transaksi terpilih:</strong><br>
+        ${esc(t.tanggal)} ${esc(t.waktuTransaksi)}<br>
+        ${esc(t.rekening)} • ${esc(t.kategori)}<br>
+        ${esc(t.keterangan) || '-'}<br>
+        Nominal: ${rupiah(t.pengeluaran)}
+      `;
+
+      document.getElementById('splitWaktu').value = t.waktuTransaksi || '';
+      addSplitItem();
+    }).withFailureHandler(fail).getTransactionById(Number(row));
+  }
+
+  function addSplitItem() {
+    const box = document.getElementById('splitItems');
+    const opts = categories
+      .filter(c => c.kelompok !== 'pemasukan')
+      .map(c => `<option value="${esc(c.nama)}">${esc(c.nama)}</option>`)
+      .join('');
+
+    const div = document.createElement('div');
+    div.className = 'box split-item';
+    div.innerHTML = `
+      <strong>Bagian ${box.children.length + 1}</strong>
+      <label>Kategori</label>
+      <select class="split-kategori"><option value="">-- Pilih kategori --</option>${opts}</select>
+      <label>Keterangan</label>
+      <input type="text" class="split-keterangan" placeholder="Contoh: nasi telur">
+      <label>Nominal</label>
+      <input type="number" class="split-nominal" min="0" placeholder="Contoh: 5000" oninput="updateSplitTotal()">`;
+
+    box.appendChild(div);
+    updateSplitTotal();
+  }
+
+  function updateSplitTotal() {
+    let total = 0;
+
+    document.querySelectorAll('.split-nominal').forEach(i => total += Number(i.value || 0));
+
+    const target = selectedSplit ? selectedSplit.pengeluaran : 0;
+    const diff = target - total;
+
+    let text = 'Total split: ' + rupiah(total);
+
+    if (target > 0) {
+      text += ' | Transaksi: ' + rupiah(target) + ' | ' + (
+        diff === 0 ? 'Sesuai' :
+        diff > 0 ? 'Kurang ' + rupiah(diff) :
+        'Lebih ' + rupiah(-diff)
+      );
+    }
+
+    document.getElementById('splitTotal').textContent = text;
+  }
+
+  function submitSplit() {
+    if (!selectedSplit) return msg('Pilih transaksi awal terlebih dahulu.', false);
+
+    const items = [];
+
+    document.querySelectorAll('.split-item').forEach(el => items.push({
+      kategori: el.querySelector('.split-kategori').value,
+      keterangan: el.querySelector('.split-keterangan').value,
+      nominal: el.querySelector('.split-nominal').value
+    }));
+
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+      if (r.success) loadSplitPage();
+    }).withFailureHandler(fail).addSplitTransaction({
+      transactionRowNumber: selectedSplit.rowNumber,
+      waktuTransaksi:
+        selectedSplit.waktuTransaksi === val('splitWaktu') ? '' : val('splitWaktu'),
+      items
+    });
+  }
+
+  function loadDebts() {
+    google.script.run.withSuccessHandler(d => {
+      document.getElementById('totalHutang').textContent = rupiah(d.totalHutang);
+      document.getElementById('totalPiutang').textContent = rupiah(d.totalPiutang);
+
+      const tb = document.getElementById('debtBody');
+
+      if (!d.items.length) {
+        tb.innerHTML = '<tr><td colspan="9">Belum ada hutang atau piutang.</td></tr>';
+        return;
+      }
+
+      tb.innerHTML = d.items.map(i => `
+        <tr>
+          <td>${esc(i.tanggal)}</td>
+          <td>${esc(i.jenis)}</td>
+          <td>${esc(i.nama)}</td>
+          <td>${esc(i.rekening)}</td>
+          <td>${esc(i.kategori)}</td>
+          <td>${rupiah(i.nominal)}</td>
+          <td>${esc(i.jatuhTempo)}</td>
+          <td>${esc(i.status)}</td>
+          <td>${i.status === 'Lunas' ? '-' : `<button class="small primary" onclick="settleDebt(${i.rowNumber})">Tandai Lunas</button>`}</td>
+        </tr>`).join('');
+    }).withFailureHandler(fail).getDebts();
+  }
+
+  function submitDebt() {
+    const data = {
+      tanggal: val('debtTanggal'),
+      waktuTransaksi: val('debtWaktu'),
+      jenis: val('debtJenis'),
+      namaOrang: val('debtNama'),
+      rekening: val('debtRekening'),
+      kategori: val('debtKategori'),
+      nominal: val('debtNominal'),
+      keterangan: val('debtKeterangan'),
+      jatuhTempo: val('debtDue')
+    };
+
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+
+      if (r.success) {
+        ['debtNama','debtNominal','debtKeterangan','debtDue','debtWaktu'].forEach(id => document.getElementById(id).value = '');
+        loadDebts();
+        showBudgetInfo('debtKategori', 'debtBudgetInfo');
+      }
+    }).withFailureHandler(fail).addDebt(data);
+  }
+
+  function settleDebt(row) {
+    if (!confirm('Tandai lunas? Sistem membuat transaksi pelunasan di rekening yang sama.')) return;
+
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+      loadDebts();
+    }).withFailureHandler(fail).settleDebt(row);
+  }
+
+  function previewBudget() {
+    const t = Number(val('budgetTotal') || 0);
+
+    document.getElementById('budgetPreview').innerHTML = t > 0
+      ? `Makan 45%: ${rupiah(t*0.45)}<br>Operasional 30%: ${rupiah(t*0.30)}<br>Nabung 15%: ${rupiah(t*0.15)}<br>Sedekah / Investasi 10%: ${rupiah(t*0.10)}`
+      : '';
+  }
+
+  function loadBudgetPage() {
+    google.script.run.withSuccessHandler(d => {
+      document.getElementById('budgetTotal').value = d.budget ? d.budget.total : '';
+      previewBudget();
+      renderUsage(d.budgetUsage, 'budgetUsageDetail');
+    }).withFailureHandler(fail).getDashboard(val('budgetMonth'));
+  }
+
+  function saveBudget() {
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+      loadBudgetPage();
+    }).withFailureHandler(fail).saveBudget({
+      bulan: val('budgetMonth'),
+      total: val('budgetTotal')
+    });
+  }
+
+  function loadCategoryManager() {
+    google.script.run.withSuccessHandler(list => {
+      categories = list;
+      const el = document.getElementById('categoryList');
+
+      if (!list.length) {
+        el.innerHTML = '<div class="note">Belum ada kategori.</div>';
+        return;
+      }
+
+      el.innerHTML = list.map(c => `
+        <div class="box">
+          <div class="value">${esc(c.nama)}</div>
+          <select onchange="changeCategoryGroup(${c.rowNumber}, this.value)" style="margin-top:6px;">
+            ${GROUP_OPTIONS.map(g => `<option value="${g[0]}" ${g[0] === c.kelompok ? 'selected' : ''}>${g[1]}</option>`).join('')}
+          </select>
+          <button class="small danger" style="margin-top:8px;" onclick="deleteCategory(${c.rowNumber})">Hapus</button>
+        </div>`).join('');
+    }).withFailureHandler(fail).getCategories();
+  }
+
+  function saveCategory() {
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+
+      if (r.success) {
+        document.getElementById('categoryName').value = '';
+        loadCategoryManager();
+      }
+    }).withFailureHandler(fail).addCategory({
+      nama: val('categoryName'),
+      kelompok: val('categoryGroup')
+    });
+  }
+
+  function changeCategoryGroup(row, group) {
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+      loadBudgetPage();
+    }).withFailureHandler(fail).updateCategoryGroup(row, group);
+  }
+
+  function deleteCategory(row) {
+    if (!confirm('Hapus kategori ini? Transaksi lama tetap tersimpan.')) return;
+
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+      loadCategoryManager();
+    }).withFailureHandler(fail).deleteCategory(row);
+  }
+
+  function loadTransferAccounts() {
+    google.script.run.withSuccessHandler(list => {
+      const from = document.getElementById('transferFrom');
+      const to = document.getElementById('transferTo');
+
+      from.innerHTML = list.map(a => `<option value="${esc(a.nama)}">${esc(a.nama)}</option>`).join('');
+      to.innerHTML = from.innerHTML;
+    }).getAccountList();
+  }
+
+  function submitTransfer() {
+    const data = {
+      tanggal: val('transferDate'),
+      dari: val('transferFrom'),
+      ke: val('transferTo'),
+      nominal: val('transferAmount'),
+      keterangan: val('transferNote')
+    };
+
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+
+      if (r.success) {
+        document.getElementById('transferAmount').value = '';
+        document.getElementById('transferNote').value = '';
+        loadDashboard();
+      }
+    }).withFailureHandler(fail).transferBetweenAccounts(data);
+  }
+
+  function addAccount() {
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+
+      if (r.success) {
+        document.getElementById('accountName').value = '';
+        document.getElementById('accountBalance').value = '';
+        loadAccountSelect('adjustmentAccount');
+        loadTransferAccounts();
+      }
+    }).withFailureHandler(fail).addAccount({
+      nama: val('accountName'),
+      jenis: val('accountType'),
+      saldoAwal: val('accountBalance'),
+      tanggal: val('accountDate')
+    });
+  }
+
+  function saveAdjustment() {
+    if (!confirm('Simpan penyesuaian saldo ini?')) return;
+
+    google.script.run.withSuccessHandler(r => {
+      msg(r.message, r.success);
+
+      if (r.success) {
+        document.getElementById('adjustmentAmount').value = '';
+        document.getElementById('adjustmentNote').value = '';
+      }
+    }).withFailureHandler(fail).saveBalanceAdjustment({
+      tanggal: val('adjustmentDate'),
+      rekening: val('adjustmentAccount'),
+      saldoSebenarnya: val('adjustmentAmount'),
+      keterangan: val('adjustmentNote')
+    });
+  }
+
+  function renderHelp(list = HELP_DATA) {
+    const container = document.getElementById('helpList');
+    container.innerHTML = '';
+
+    if (!list.length) {
+      container.innerHTML = '<div class="card"><div class="note">Pertanyaan tidak ditemukan.</div></div>';
+      return;
+    }
+
+    list.forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = 'faq-item';
+      div.innerHTML = `
+        <button class="faq-question" onclick="toggleHelp(${index})">
+          <span>${item.q}</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">${item.a}</div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function toggleHelp(index) {
+    const items = document.querySelectorAll('.faq-item');
+    items[index].classList.toggle('open');
+
+    const icon = items[index].querySelector('.faq-icon');
+    icon.textContent = items[index].classList.contains('open') ? '-' : '+';
+  }
+
+  function filterHelp() {
+    const keyword = document.getElementById('helpSearch').value.toLowerCase();
+    const filtered = HELP_DATA.filter(item =>
+      item.q.toLowerCase().includes(keyword) ||
+      item.a.toLowerCase().includes(keyword)
+    );
+
+    renderHelp(filtered);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const t = todayStr();
+    ['tanggal','debtTanggal','accountDate','adjustmentDate','transferDate'].forEach(id => document.getElementById(id).value = t);
+    document.getElementById('dashboardMonth').value = t.substring(0, 7);
+    document.getElementById('budgetMonth').value = t.substring(0, 7);
+    showPage('dashboard');
+  });
+</script>
+</body>
+</html>
